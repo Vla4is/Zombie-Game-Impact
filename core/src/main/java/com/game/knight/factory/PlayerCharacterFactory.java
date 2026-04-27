@@ -17,10 +17,10 @@ public final class PlayerCharacterFactory {
     public static PlayerCharacter createPlayer(float x, float y) {
         CharacterData characterData = new CharacterData(
             "Vlad",
-            CharacterClass.KNIGHT,
-            WeaponType.SWORD,
-            PaletteColor.SKY,
-            PaletteColor.BROWN,
+            CharacterClass.ARCHER,
+            WeaponType.BOW,
+            PaletteColor.GOLD, //outfit color
+            PaletteColor.BROWN, //hair color
             HairStyle.SHORT
         );
 
