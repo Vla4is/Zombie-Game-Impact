@@ -1,32 +1,29 @@
 package com.game.knight.entity;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.game.knight.model.CharacterClass;
 import com.game.knight.model.CharacterData;
 import com.game.knight.model.HairStyle;
 import com.game.knight.model.PaletteColor;
 import com.game.knight.model.PetType;
 import com.game.knight.model.WeaponType;
-import com.game.knight.role.RoleBehavior;
-import com.game.knight.role.RoleFactory;
 
 public abstract class Combatant {
     private static final float ATTACK_ANIMATION_DURATION = 0.18f;
 
     private final CharacterData data;
-    private final RoleBehavior role;
+    private final CharacterClass characterClass;
     private final Rectangle bounds;
     private final int maxHealth;
-    private final float moveSpeedMultiplier;
     private int health;
     private float attackAnimationTime;
     private float attackCooldownTime;
 
-    protected Combatant(CharacterData data, float x, float y, float moveSpeedMultiplier) {
+    protected Combatant(CharacterData data, float x, float y) {
         this.data = data;
-        this.role = RoleFactory.create(data.getCharacterClass());
+        this.characterClass = data.getCharacterClass();
         this.bounds = new Rectangle(x, y, 48f, 72f);
-        this.maxHealth = role.getMaxHealth();
-        this.moveSpeedMultiplier = moveSpeedMultiplier;
+        this.maxHealth = characterClass.getMaxHealth();
         this.health = maxHealth;
     }
 
@@ -48,14 +45,14 @@ public abstract class Combatant {
         return attackCooldownTime <= 0f && isAlive();
     }
 
-    protected int attack(Combatant target, float cooldownSeconds) {
+    protected int attack(Combatant target) {
         if (!canAttack()) {
             return 0;
         }
 
         startAttackAnimation();
-        attackCooldownTime = cooldownSeconds;
-        int damage = role.attack(getWeaponType());
+        attackCooldownTime = getAttackCooldownSeconds();
+        int damage = characterClass.attack(getWeaponType());
         target.takeDamage(damage);
         return damage;
     }
@@ -97,7 +94,11 @@ public abstract class Combatant {
     }
 
     public float getMoveSpeed() {
-        return role.getMoveSpeed() * moveSpeedMultiplier;
+        return characterClass.getMoveSpeed();
+    }
+
+    public float getAttackCooldownSeconds() {
+        return characterClass.getAttackCooldownSeconds();
     }
 
     public String getName() {
@@ -105,11 +106,11 @@ public abstract class Combatant {
     }
 
     public String getRoleName() {
-        return role.getRoleName();
+        return characterClass.getDisplayName();
     }
 
     public String getSkillName() {
-        return role.getSkillName();
+        return characterClass.getSkillName();
     }
 
     public WeaponType getWeaponType() {
