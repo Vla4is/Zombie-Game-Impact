@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.game.knight.Main;
 
 public class PlayGameScreen extends ScreenAdapter {
@@ -14,6 +15,7 @@ public class PlayGameScreen extends ScreenAdapter {
     private final String status;
     private final String subheading;
     private final float startDelay;
+    private final Texture logo;
     private boolean readyForStart;
     private float delayRemaining;
 
@@ -28,6 +30,7 @@ public class PlayGameScreen extends ScreenAdapter {
         this.subheading = subheading;
         this.startDelay = startDelay;
         this.delayRemaining = startDelay;
+        this.logo = new Texture("impactacademies.png");
     }
 
     @Override
@@ -52,6 +55,7 @@ public class PlayGameScreen extends ScreenAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         game.getBatch().begin();
+        game.getBatch().draw(logo, 30, 30, 140, 140);
         game.getFont().draw(game.getBatch(), heading, 240, 300);
         if (!status.isEmpty()) {
             game.getFont().draw(game.getBatch(), status, 270, 270);
@@ -64,6 +68,11 @@ public class PlayGameScreen extends ScreenAdapter {
         game.getFont().draw(game.getBatch(), "Kills: " + game.getKills(), 270, 225);
         game.getFont().draw(game.getBatch(), "Move with WASD or arrows. Press SPACE to attack.", 120, 200);
         game.getBatch().end();
+    }
+
+    @Override
+    public void dispose() {
+        logo.dispose();
     }
 
     public static float getDeathStartDelay() {
