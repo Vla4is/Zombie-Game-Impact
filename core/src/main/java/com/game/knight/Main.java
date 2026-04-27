@@ -4,14 +4,14 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.game.knight.exercise.StudentCharacterFactory;
-import com.game.knight.screens.ArenaScreen;
+import com.game.knight.screens.PlayGameScreen;
 
 /** Main game entry point shared by all platforms. */
 public class Main extends Game {
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private BitmapFont font;
+    private int kills;
 
     @Override
     public void create() {
@@ -20,7 +20,7 @@ public class Main extends Game {
         font = new BitmapFont();
         font.getData().setScale(1.2f);
 
-        setScreen(new ArenaScreen(this, StudentCharacterFactory.createCharacter()));
+        setScreen(new PlayGameScreen(this));
     }
 
     public SpriteBatch getBatch() {
@@ -33,6 +33,18 @@ public class Main extends Game {
 
     public BitmapFont getFont() {
         return font;
+    }
+
+    public int getKills() {
+        return kills;
+    }
+
+    public void resetKills() {
+        kills = 0;
+    }
+
+    public void addKill() {
+        kills++;
     }
 
     @Override

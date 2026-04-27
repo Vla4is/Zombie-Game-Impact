@@ -1,7 +1,6 @@
 package com.game.knight.role;
 
-import com.game.knight.entity.PlayerCharacter;
-import com.game.knight.entity.TrainingDummy;
+import com.game.knight.model.WeaponType;
 
 public interface RoleBehavior {
     String getRoleName();
@@ -12,5 +11,5 @@ public interface RoleBehavior {
 
     float getMoveSpeed();
 
-    int attack(PlayerCharacter player, TrainingDummy dummy);
+    int attack(WeaponType weaponType);
 }

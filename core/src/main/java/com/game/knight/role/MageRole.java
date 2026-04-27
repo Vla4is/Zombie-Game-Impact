@@ -1,7 +1,6 @@
 package com.game.knight.role;
 
-import com.game.knight.entity.PlayerCharacter;
-import com.game.knight.entity.TrainingDummy;
+import com.game.knight.model.WeaponType;
 
 public class MageRole implements RoleBehavior {
     @Override
@@ -25,7 +24,7 @@ public class MageRole implements RoleBehavior {
     }
 
     @Override
-    public int attack(PlayerCharacter player, TrainingDummy dummy) {
-        return player.getWeaponType().getBaseDamage() + 14;
+    public int attack(WeaponType weaponType) {
+        return weaponType.getBaseDamage() + 14;
     }
 }

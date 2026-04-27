@@ -1,4 +1,4 @@
-package com.game.knight.exercise;
+package com.game.knight.factory;
 
 import com.game.knight.model.CharacterClass;
 import com.game.knight.model.CharacterData;
@@ -7,19 +7,22 @@ import com.game.knight.model.PaletteColor;
 import com.game.knight.model.PetType;
 import com.game.knight.model.WeaponType;
 
-public final class LessonChallenge {
-    private LessonChallenge() {
+/**
+ * Defines the player character used in the game.
+ */
+public final class PlayerCharacterFactory {
+    private PlayerCharacterFactory() {
     }
 
-    public static CharacterData createTargetCharacter() {
+    public static CharacterData createCharacter() {
         return new CharacterData(
-            "Zara",
+            "Vlad",
             CharacterClass.ARCHER,
             WeaponType.BOW,
-            PaletteColor.CORAL,
-            PaletteColor.GOLD,
-            HairStyle.PONYTAIL,
-            PetType.MOCHI
+            PaletteColor.SKY,
+            PaletteColor.BROWN,
+            HairStyle.SHORT,
+            PetType.SPARK
         );
     }
 }

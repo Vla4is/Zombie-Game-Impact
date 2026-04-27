@@ -6,36 +6,57 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.game.knight.Main;
+import com.game.knight.entity.Combatant;
+import com.game.knight.entity.Enemy;
 import com.game.knight.entity.PlayerCharacter;
-import com.game.knight.entity.TrainingDummy;
-import com.game.knight.exercise.LessonChallenge;
-import com.game.knight.exercise.StudentCharacterFactory;
-import com.game.knight.model.CharacterData;
+import com.game.knight.entity.Zombie;
+import com.game.knight.factory.PlayerCharacterFactory;
+import com.game.knight.factory.ZombieCharacterFactory;
 import com.game.knight.model.HairStyle;
 import com.game.knight.model.PaletteColor;
 import com.game.knight.model.WeaponType;
 
 public class ArenaScreen extends ScreenAdapter {
+    private static final float ARENA_MIN_X = 30f;
+    private static final float ARENA_MAX_X = 560f;
+    private static final float ARENA_MIN_Y = 60f;
+    private static final float ARENA_MAX_Y = 356f;
+    private static final float ZOMBIE_SPAWN_X = 470f;
+    private static final float ZOMBIE_SPAWN_Y = 190f;
+
     private final Main game;
     private final PlayerCharacter player;
-    private final TrainingDummy dummy;
-    private final CharacterData targetCharacter;
-    private String message;
+    private Enemy enemy;
 
-    public ArenaScreen(Main game, CharacterData characterData) {
+    public ArenaScreen(Main game) {
         this.game = game;
-        this.player = new PlayerCharacter(characterData, 80, 160);
-        this.dummy = new TrainingDummy(450, 170, 60, 100, 60);
-        this.targetCharacter = LessonChallenge.createTargetCharacter();
-        this.message = player.getData().matches(targetCharacter)
-            ? "Correct character. Walk to the dummy and press SPACE to attack."
-            : "Edit StudentCharacterFactory.java until your code matches the target.";
+        this.player = new PlayerCharacter(PlayerCharacterFactory.createCharacter(), 80, 160);
+        this.enemy = createEnemy();
     }
 
     @Override
     public void render(float delta) {
         handleInput(delta);
         player.update(delta);
+        updateEnemy(delta);
+        keepInsideArena(player);
+        keepInsideArena(enemy);
+
+        if (!player.isAlive()) {
+            game.setScreen(new PlayGameScreen(
+                game,
+                "PLAY GAME",
+                "YOU DIED",
+                "Press ENTER or SPACE to play again",
+                PlayGameScreen.getDeathStartDelay()
+            ));
+            return;
+        }
+        if (!enemy.isAlive()) {
+            game.addKill();
+            enemy = createEnemy();
+            return;
+        }
 
         Gdx.gl.glClearColor(0.10f, 0.12f, 0.10f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -59,24 +80,26 @@ public class ArenaScreen extends ScreenAdapter {
             player.move(0, -moveAmount);
         }
 
-        keepPlayerInsideArena();
-
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            player.startAttackAnimation();
-            if (isDummyInRange()) {
-                int damage = player.attack(dummy);
-                message = player.getRoleName() + " used " + player.getSkillName() + " for " + damage + " damage.";
+            if (isPlayerInRange()) {
+                player.attack(enemy);
+            } else {
+                player.startAttackAnimation();
             }
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-            game.setScreen(new ArenaScreen(game, StudentCharacterFactory.createCharacter()));
         }
     }
 
-    private void keepPlayerInsideArena() {
-        player.getBounds().x = Math.max(30, Math.min(player.getBounds().x, 560));
-        player.getBounds().y = Math.max(60, Math.min(player.getBounds().y, 356));
+    private void updateEnemy(float delta) {
+        enemy.updateAgainst(player, delta);
+    }
+
+    private Enemy createEnemy() {
+        return new Zombie(ZombieCharacterFactory.createCharacter(), ZOMBIE_SPAWN_X, ZOMBIE_SPAWN_Y);
+    }
+
+    private void keepInsideArena(Combatant combatant) {
+        combatant.getBounds().x = Math.max(ARENA_MIN_X, Math.min(combatant.getBounds().x, ARENA_MAX_X));
+        combatant.getBounds().y = Math.max(ARENA_MIN_Y, Math.min(combatant.getBounds().y, ARENA_MAX_Y));
     }
 
     private void drawWorld() {
@@ -85,34 +108,40 @@ public class ArenaScreen extends ScreenAdapter {
         shapeRenderer.setColor(0.18f, 0.30f, 0.18f, 1f);
         shapeRenderer.rect(20, 50, 600, 360);
 
-        drawPlayer(shapeRenderer);
+        drawCharacter(shapeRenderer, player, PaletteColor.CREAM, player.getOutfitColor(), player.getHairColor());
         drawPet(shapeRenderer);
-        drawWeapon(shapeRenderer);
+        drawWeapon(shapeRenderer, player, false);
 
-        shapeRenderer.setColor(0.65f, 0.30f, 0.25f, 1f);
-        shapeRenderer.rect(dummy.getBounds().x, dummy.getBounds().y, dummy.getBounds().width, dummy.getBounds().height);
+        drawCharacter(shapeRenderer, enemy, PaletteColor.LIME, PaletteColor.CHARCOAL, enemy.getHairColor());
+        drawWeapon(shapeRenderer, enemy, true);
 
         shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 1f);
         shapeRenderer.rect(430, 320, 120, 16);
         shapeRenderer.setColor(0.8f, 0.15f, 0.15f, 1f);
-        shapeRenderer.rect(430, 320, 120f * dummy.getHealth() / dummy.getMaxHealth(), 16);
+        shapeRenderer.rect(430, 320, 120f * enemy.getHealth() / enemy.getMaxHealth(), 16);
         shapeRenderer.end();
     }
 
-    private void drawPlayer(ShapeRenderer shapeRenderer) {
-        float x = player.getBounds().x;
-        float y = player.getBounds().y;
+    private void drawCharacter(
+        ShapeRenderer shapeRenderer,
+        Combatant combatant,
+        PaletteColor skinColor,
+        PaletteColor outfitColor,
+        PaletteColor hairColor
+    ) {
+        float x = combatant.getBounds().x;
+        float y = combatant.getBounds().y;
 
-        shapeRenderer.setColor(PaletteColor.CREAM.toColor());
+        shapeRenderer.setColor(skinColor.toColor());
         shapeRenderer.circle(x + 24, y + 56, 14);
 
-        shapeRenderer.setColor(player.getHairColor().toColor());
-        drawHair(shapeRenderer, x, y);
+        shapeRenderer.setColor(hairColor.toColor());
+        drawHair(shapeRenderer, combatant, x, y);
 
-        shapeRenderer.setColor(player.getOutfitColor().toColor());
+        shapeRenderer.setColor(outfitColor.toColor());
         shapeRenderer.rect(x + 10, y + 20, 28, 30);
 
-        shapeRenderer.setColor(PaletteColor.CREAM.toColor());
+        shapeRenderer.setColor(skinColor.toColor());
         shapeRenderer.rect(x + 2, y + 22, 8, 22);
         shapeRenderer.rect(x + 38, y + 22, 8, 22);
 
@@ -121,8 +150,8 @@ public class ArenaScreen extends ScreenAdapter {
         shapeRenderer.rect(x + 26, y, 8, 20);
     }
 
-    private void drawHair(ShapeRenderer shapeRenderer, float x, float y) {
-        HairStyle hairStyle = player.getHairStyle();
+    private void drawHair(ShapeRenderer shapeRenderer, Combatant combatant, float x, float y) {
+        HairStyle hairStyle = combatant.getHairStyle();
         if (hairStyle == HairStyle.SHORT) {
             shapeRenderer.rect(x + 12, y + 62, 24, 8);
         } else if (hairStyle == HairStyle.SPIKY) {
@@ -134,71 +163,68 @@ public class ArenaScreen extends ScreenAdapter {
         }
     }
 
-    private void drawWeapon(ShapeRenderer shapeRenderer) {
-        float x = weaponX();
-        float y = weaponY();
-        WeaponType weaponType = player.getWeaponType();
-        float swing = attackOffset();
+    private void drawWeapon(ShapeRenderer shapeRenderer, Combatant combatant, boolean facesLeft) {
+        float swing = attackOffset(combatant);
+        float x = weaponX(combatant, facesLeft, swing);
+        float y = weaponY(combatant);
+        WeaponType weaponType = combatant.getWeaponType();
 
         if (weaponType == WeaponType.SWORD) {
             shapeRenderer.setColor(PaletteColor.CHARCOAL.toColor());
-            shapeRenderer.rect(x + swing, y, 6, 28);
+            shapeRenderer.rect(x, y, 6, 28);
             shapeRenderer.setColor(PaletteColor.CREAM.toColor());
-            shapeRenderer.rect(x + 1 + swing, y + 28, 4, 18);
+            shapeRenderer.rect(x + 1, y + 28, 4, 18);
         } else if (weaponType == WeaponType.STAFF) {
             shapeRenderer.setColor(PaletteColor.BROWN.toColor());
-            shapeRenderer.rect(x + swing, y - 4, 5, 52);
+            shapeRenderer.rect(x, y - 4, 5, 52);
             shapeRenderer.setColor(PaletteColor.VIOLET.toColor());
-            shapeRenderer.circle(x + 2 + swing, y + 52, 6);
+            shapeRenderer.circle(x + 2, y + 52, 6);
         } else {
             shapeRenderer.setColor(PaletteColor.BROWN.toColor());
-            shapeRenderer.rect(x + swing, y, 4, 38);
-            shapeRenderer.arc(x - 8 + swing, y + 18, 14, -90, 180);
+            shapeRenderer.rect(x, y, 4, 38);
+            if (facesLeft) {
+                shapeRenderer.arc(x - 2, y + 18, 14, 90, 180);
+            } else {
+                shapeRenderer.arc(x - 8, y + 18, 14, -90, 180);
+            }
         }
     }
 
-    private boolean isDummyInRange() {
-        float horizontalDistance = dummy.getBounds().x - player.getBounds().x;
-        float verticalDistance = Math.abs(dummyCenterY() - playerCenterY());
-        return horizontalDistance >= 0f
-            && horizontalDistance <= player.getAttackDistance()
-            && verticalDistance <= 60f;
+    private boolean isPlayerInRange() {
+        float horizontalDistance = Math.abs(enemy.centerX() - player.centerX());
+        float verticalDistance = Math.abs(enemy.centerY() - player.centerY());
+        return horizontalDistance <= player.getAttackDistance() && verticalDistance <= 60f;
     }
 
-    private float playerCenterY() {
-        return player.getBounds().y + player.getBounds().height * 0.5f;
+    private float weaponX(Combatant combatant, boolean facesLeft, float swing) {
+        if (facesLeft) {
+            return combatant.getBounds().x - 10f - swing;
+        }
+        return combatant.getBounds().x + combatant.getBounds().width + 4f + swing;
     }
 
-    private float dummyCenterY() {
-        return dummy.getBounds().y + dummy.getBounds().height * 0.5f;
+    private float weaponY(Combatant combatant) {
+        return combatant.getBounds().y + 22f + attackHeightOffset(combatant);
     }
 
-    private float weaponX() {
-        return player.getBounds().x + player.getBounds().width + 4f + attackOffset();
-    }
-
-    private float weaponY() {
-        return player.getBounds().y + 22f + attackHeightOffset();
-    }
-
-    private float attackOffset() {
-        if (!player.isAttacking()) {
+    private float attackOffset(Combatant combatant) {
+        if (!combatant.isAttacking()) {
             return 0f;
         }
 
-        float progress = player.getAttackAnimationProgress();
+        float progress = combatant.getAttackAnimationProgress();
         if (progress < 0.5f) {
             return progress * 40f;
         }
         return (1f - progress) * 40f;
     }
 
-    private float attackHeightOffset() {
-        if (!player.isAttacking()) {
+    private float attackHeightOffset(Combatant combatant) {
+        if (!combatant.isAttacking()) {
             return 0f;
         }
 
-        float progress = player.getAttackAnimationProgress();
+        float progress = combatant.getAttackAnimationProgress();
         if (progress < 0.5f) {
             return progress * 10f;
         }
@@ -217,36 +243,11 @@ public class ArenaScreen extends ScreenAdapter {
     private void drawHud() {
         game.getBatch().begin();
         game.getFont().draw(game.getBatch(), player.getName() + " the " + player.getRoleName(), 20, 470);
-        game.getFont().draw(game.getBatch(), "Weapon: " + player.getWeaponType().getDisplayName() + "  Range: " + (int) player.getAttackDistance(), 20, 440);
-        game.getFont().draw(game.getBatch(), "Hair: " + player.getHairStyle().getDisplayName() + " / " + player.getHairColor().getDisplayName(), 20, 410);
-        game.getFont().draw(game.getBatch(), "Outfit: " + player.getOutfitColor().getDisplayName() + "  Pet: " + player.getPetType().getDisplayName(), 20, 380);
+        game.getFont().draw(game.getBatch(), "Kills: " + game.getKills(), 20, 440);
         game.getFont().draw(game.getBatch(), "Health: " + player.getHealth() + "/" + player.getMaxHealth(), 20, 350);
-        game.getFont().draw(game.getBatch(), "Dummy HP: " + dummy.getHealth() + "/" + dummy.getMaxHealth(), 430, 360);
-        game.getFont().draw(game.getBatch(), "Target: " + describe(targetCharacter), 20, 90, 600, 1, true);
-        game.getFont().draw(
-            game.getBatch(),
-            player.getData().matches(targetCharacter) ? "Status: correct character" : "Status: not matched yet",
-            20,
-            60
-        );
-        game.getFont().draw(game.getBatch(), message, 20, 25);
-        game.getFont().draw(game.getBatch(), "WASD/Arrows move  SPACE attack  R reload code character", 180, 470);
+        game.getFont().draw(game.getBatch(), "Enemy HP: " + enemy.getHealth() + "/" + enemy.getMaxHealth(), 430, 360);
+        game.getFont().draw(game.getBatch(), "Enemy: " + enemy.getRoleName() + " with " + enemy.getWeaponType().getDisplayName(), 20, 90);
+        game.getFont().draw(game.getBatch(), "WASD/Arrows move  SPACE attack", 300, 470);
         game.getBatch().end();
-    }
-
-    private String describe(CharacterData character) {
-        return character.getName()
-            + ", "
-            + character.getCharacterClass().getDisplayName()
-            + ", "
-            + character.getWeaponType().getDisplayName()
-            + ", outfit "
-            + character.getOutfitColor().getDisplayName()
-            + ", hair "
-            + character.getHairStyle().getDisplayName()
-            + " "
-            + character.getHairColor().getDisplayName()
-            + ", pet "
-            + character.getPetType().getDisplayName();
     }
 }
