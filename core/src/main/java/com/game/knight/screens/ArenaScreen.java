@@ -12,9 +12,8 @@ import com.game.knight.entity.PlayerCharacter;
 import com.game.knight.entity.Zombie;
 import com.game.knight.factory.PlayerCharacterFactory;
 import com.game.knight.factory.ZombieCharacterFactory;
-import com.game.knight.model.HairStyle;
 import com.game.knight.model.PaletteColor;
-import com.game.knight.model.WeaponType;
+import com.game.knight.render.CombatantRenderer;
 
 public class ArenaScreen extends ScreenAdapter {
     private static final float ARENA_MIN_X = 30f;
@@ -26,11 +25,13 @@ public class ArenaScreen extends ScreenAdapter {
 
     private final Main game;
     private final PlayerCharacter player;
+    private final CombatantRenderer combatantRenderer;
     private Enemy enemy;
 
     public ArenaScreen(Main game) {
         this.game = game;
-        this.player = new PlayerCharacter(PlayerCharacterFactory.createCharacter(), 80, 160);
+        this.player = PlayerCharacterFactory.createPlayer(80, 160);
+        this.combatantRenderer = new CombatantRenderer();
         this.enemy = createEnemy();
     }
 
@@ -94,7 +95,7 @@ public class ArenaScreen extends ScreenAdapter {
     }
 
     private Enemy createEnemy() {
-        return new Zombie(ZombieCharacterFactory.createCharacter(), ZOMBIE_SPAWN_X, ZOMBIE_SPAWN_Y);
+        return ZombieCharacterFactory.createZombie(ZOMBIE_SPAWN_X, ZOMBIE_SPAWN_Y);
     }
 
     private void keepInsideArena(Combatant combatant) {
@@ -108,12 +109,10 @@ public class ArenaScreen extends ScreenAdapter {
         shapeRenderer.setColor(0.18f, 0.30f, 0.18f, 1f);
         shapeRenderer.rect(20, 50, 600, 360);
 
-        drawCharacter(shapeRenderer, player, PaletteColor.CREAM, player.getOutfitColor(), player.getHairColor());
+        combatantRenderer.draw(shapeRenderer, player, PaletteColor.CREAM, player.getOutfitColor(), player.getHairColor(), false);
         drawPet(shapeRenderer);
-        drawWeapon(shapeRenderer, player, false);
 
-        drawCharacter(shapeRenderer, enemy, PaletteColor.LIME, PaletteColor.CHARCOAL, enemy.getHairColor());
-        drawWeapon(shapeRenderer, enemy, true);
+        combatantRenderer.draw(shapeRenderer, enemy, PaletteColor.LIME, PaletteColor.CHARCOAL, enemy.getHairColor(), true);
 
         shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 1f);
         shapeRenderer.rect(430, 320, 120, 16);
@@ -122,113 +121,10 @@ public class ArenaScreen extends ScreenAdapter {
         shapeRenderer.end();
     }
 
-    private void drawCharacter(
-        ShapeRenderer shapeRenderer,
-        Combatant combatant,
-        PaletteColor skinColor,
-        PaletteColor outfitColor,
-        PaletteColor hairColor
-    ) {
-        float x = combatant.getBounds().x;
-        float y = combatant.getBounds().y;
-
-        shapeRenderer.setColor(skinColor.toColor());
-        shapeRenderer.circle(x + 24, y + 56, 14);
-
-        shapeRenderer.setColor(hairColor.toColor());
-        drawHair(shapeRenderer, combatant, x, y);
-
-        shapeRenderer.setColor(outfitColor.toColor());
-        shapeRenderer.rect(x + 10, y + 20, 28, 30);
-
-        shapeRenderer.setColor(skinColor.toColor());
-        shapeRenderer.rect(x + 2, y + 22, 8, 22);
-        shapeRenderer.rect(x + 38, y + 22, 8, 22);
-
-        shapeRenderer.setColor(PaletteColor.CHARCOAL.toColor());
-        shapeRenderer.rect(x + 14, y, 8, 20);
-        shapeRenderer.rect(x + 26, y, 8, 20);
-    }
-
-    private void drawHair(ShapeRenderer shapeRenderer, Combatant combatant, float x, float y) {
-        HairStyle hairStyle = combatant.getHairStyle();
-        if (hairStyle == HairStyle.SHORT) {
-            shapeRenderer.rect(x + 12, y + 62, 24, 8);
-        } else if (hairStyle == HairStyle.SPIKY) {
-            shapeRenderer.triangle(x + 10, y + 64, x + 18, y + 78, x + 26, y + 64);
-            shapeRenderer.triangle(x + 22, y + 64, x + 30, y + 80, x + 38, y + 64);
-        } else {
-            shapeRenderer.rect(x + 12, y + 62, 24, 8);
-            shapeRenderer.rect(x + 30, y + 38, 8, 28);
-        }
-    }
-
-    private void drawWeapon(ShapeRenderer shapeRenderer, Combatant combatant, boolean facesLeft) {
-        float swing = attackOffset(combatant);
-        float x = weaponX(combatant, facesLeft, swing);
-        float y = weaponY(combatant);
-        WeaponType weaponType = combatant.getWeaponType();
-
-        if (weaponType == WeaponType.SWORD) {
-            shapeRenderer.setColor(PaletteColor.CHARCOAL.toColor());
-            shapeRenderer.rect(x, y, 6, 28);
-            shapeRenderer.setColor(PaletteColor.CREAM.toColor());
-            shapeRenderer.rect(x + 1, y + 28, 4, 18);
-        } else if (weaponType == WeaponType.STAFF) {
-            shapeRenderer.setColor(PaletteColor.BROWN.toColor());
-            shapeRenderer.rect(x, y - 4, 5, 52);
-            shapeRenderer.setColor(PaletteColor.VIOLET.toColor());
-            shapeRenderer.circle(x + 2, y + 52, 6);
-        } else {
-            shapeRenderer.setColor(PaletteColor.BROWN.toColor());
-            shapeRenderer.rect(x, y, 4, 38);
-            if (facesLeft) {
-                shapeRenderer.arc(x - 2, y + 18, 14, 90, 180);
-            } else {
-                shapeRenderer.arc(x - 8, y + 18, 14, -90, 180);
-            }
-        }
-    }
-
     private boolean isPlayerInRange() {
         float horizontalDistance = Math.abs(enemy.centerX() - player.centerX());
         float verticalDistance = Math.abs(enemy.centerY() - player.centerY());
         return horizontalDistance <= player.getAttackDistance() && verticalDistance <= 60f;
-    }
-
-    private float weaponX(Combatant combatant, boolean facesLeft, float swing) {
-        if (facesLeft) {
-            return combatant.getBounds().x - 10f - swing;
-        }
-        return combatant.getBounds().x + combatant.getBounds().width + 4f + swing;
-    }
-
-    private float weaponY(Combatant combatant) {
-        return combatant.getBounds().y + 22f + attackHeightOffset(combatant);
-    }
-
-    private float attackOffset(Combatant combatant) {
-        if (!combatant.isAttacking()) {
-            return 0f;
-        }
-
-        float progress = combatant.getAttackAnimationProgress();
-        if (progress < 0.5f) {
-            return progress * 40f;
-        }
-        return (1f - progress) * 40f;
-    }
-
-    private float attackHeightOffset(Combatant combatant) {
-        if (!combatant.isAttacking()) {
-            return 0f;
-        }
-
-        float progress = combatant.getAttackAnimationProgress();
-        if (progress < 0.5f) {
-            return progress * 10f;
-        }
-        return (1f - progress) * 10f;
     }
 
     private void drawPet(ShapeRenderer shapeRenderer) {
@@ -246,7 +142,7 @@ public class ArenaScreen extends ScreenAdapter {
         game.getFont().draw(game.getBatch(), "Kills: " + game.getKills(), 20, 440);
         game.getFont().draw(game.getBatch(), "Health: " + player.getHealth() + "/" + player.getMaxHealth(), 20, 350);
         game.getFont().draw(game.getBatch(), "Enemy HP: " + enemy.getHealth() + "/" + enemy.getMaxHealth(), 430, 360);
-        game.getFont().draw(game.getBatch(), "Enemy: " + enemy.getRoleName() + " with " + enemy.getWeaponType().getDisplayName(), 20, 90);
+        game.getFont().draw(game.getBatch(), "Enemy: " + enemy.getName() + " with " + enemy.getWeaponType().getDisplayName(), 20, 90);
         game.getFont().draw(game.getBatch(), "WASD/Arrows move  SPACE attack", 300, 470);
         game.getBatch().end();
     }

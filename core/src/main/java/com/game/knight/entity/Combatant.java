@@ -16,15 +16,17 @@ public abstract class Combatant {
     private final RoleBehavior role;
     private final Rectangle bounds;
     private final int maxHealth;
+    private final float moveSpeedMultiplier;
     private int health;
     private float attackAnimationTime;
     private float attackCooldownTime;
 
-    protected Combatant(CharacterData data, float x, float y) {
+    protected Combatant(CharacterData data, float x, float y, float moveSpeedMultiplier) {
         this.data = data;
         this.role = RoleFactory.create(data.getCharacterClass());
         this.bounds = new Rectangle(x, y, 48f, 72f);
         this.maxHealth = role.getMaxHealth();
+        this.moveSpeedMultiplier = moveSpeedMultiplier;
         this.health = maxHealth;
     }
 
@@ -95,7 +97,7 @@ public abstract class Combatant {
     }
 
     public float getMoveSpeed() {
-        return role.getMoveSpeed();
+        return role.getMoveSpeed() * moveSpeedMultiplier;
     }
 
     public String getName() {

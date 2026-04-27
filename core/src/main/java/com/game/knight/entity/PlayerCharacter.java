@@ -4,13 +4,14 @@ import com.game.knight.model.CharacterData;
 
 /** Represents the playable character during the arena scene. */
 public class PlayerCharacter extends Combatant {
-    private static final float ATTACK_COOLDOWN = 0.32f;
+    private final float attackCooldownSeconds;
 
-    public PlayerCharacter(CharacterData data, float x, float y) {
-        super(data, x, y);
+    public PlayerCharacter(CharacterData data, float x, float y, float moveSpeedMultiplier, float attackCooldownSeconds) {
+        super(data, x, y, moveSpeedMultiplier);
+        this.attackCooldownSeconds = attackCooldownSeconds;
     }
 
     public int attack(Enemy enemy) {
-        return attack(enemy, ATTACK_COOLDOWN);
+        return attack(enemy, attackCooldownSeconds);
     }
 }
