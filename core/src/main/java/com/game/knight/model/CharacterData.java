@@ -8,7 +8,6 @@ public class CharacterData {
     private final PaletteColor outfitColor;
     private final PaletteColor hairColor;
     private final HairStyle hairStyle;
-    private final PetType petType;
 
     public CharacterData(
         String name,
@@ -16,8 +15,7 @@ public class CharacterData {
         WeaponType weaponType,
         PaletteColor outfitColor,
         PaletteColor hairColor,
-        HairStyle hairStyle,
-        PetType petType
+        HairStyle hairStyle
     ) {
         this.name = name;
         this.characterClass = characterClass;
@@ -25,7 +23,6 @@ public class CharacterData {
         this.outfitColor = outfitColor;
         this.hairColor = hairColor;
         this.hairStyle = hairStyle;
-        this.petType = petType;
     }
 
     public boolean matches(CharacterData other) {
@@ -34,8 +31,7 @@ public class CharacterData {
             && weaponType == other.weaponType
             && outfitColor == other.outfitColor
             && hairColor == other.hairColor
-            && hairStyle == other.hairStyle
-            && petType == other.petType;
+            && hairStyle == other.hairStyle;
     }
 
     public String getName() {
@@ -60,9 +56,5 @@ public class CharacterData {
 
     public HairStyle getHairStyle() {
         return hairStyle;
-    }
-
-    public PetType getPetType() {
-        return petType;
     }
 }

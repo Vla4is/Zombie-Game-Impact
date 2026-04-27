@@ -5,7 +5,6 @@ import com.game.knight.model.CharacterClass;
 import com.game.knight.model.CharacterData;
 import com.game.knight.model.HairStyle;
 import com.game.knight.model.PaletteColor;
-import com.game.knight.model.PetType;
 import com.game.knight.model.WeaponType;
 
 /**
@@ -22,8 +21,7 @@ public final class PlayerCharacterFactory {
             WeaponType.SWORD,
             PaletteColor.SKY,
             PaletteColor.BROWN,
-            HairStyle.SHORT,
-            PetType.SPARK
+            HairStyle.SHORT
         );
 
         return new PlayerCharacter(characterData, x, y);

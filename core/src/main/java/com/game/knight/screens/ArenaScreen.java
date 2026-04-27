@@ -110,8 +110,6 @@ public class ArenaScreen extends ScreenAdapter {
         shapeRenderer.rect(20, 50, 600, 360);
 
         combatantRenderer.draw(shapeRenderer, player, PaletteColor.CREAM, player.getOutfitColor(), player.getHairColor(), false);
-        drawPet(shapeRenderer);
-
         combatantRenderer.draw(shapeRenderer, enemy, PaletteColor.LIME, PaletteColor.CHARCOAL, enemy.getHairColor(), true);
 
         shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 1f);
@@ -125,15 +123,6 @@ public class ArenaScreen extends ScreenAdapter {
         float horizontalDistance = Math.abs(enemy.centerX() - player.centerX());
         float verticalDistance = Math.abs(enemy.centerY() - player.centerY());
         return horizontalDistance <= player.getAttackDistance() && verticalDistance <= 60f;
-    }
-
-    private void drawPet(ShapeRenderer shapeRenderer) {
-        float x = player.getBounds().x - 28;
-        float y = player.getBounds().y + 4;
-        shapeRenderer.setColor(PaletteColor.GOLD.toColor());
-        shapeRenderer.circle(x, y + 8, 8);
-        shapeRenderer.circle(x - 6, y + 18, 4);
-        shapeRenderer.circle(x + 6, y + 18, 4);
     }
 
     private void drawHud() {

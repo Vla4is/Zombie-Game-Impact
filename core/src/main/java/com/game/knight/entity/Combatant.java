@@ -5,7 +5,6 @@ import com.game.knight.model.CharacterClass;
 import com.game.knight.model.CharacterData;
 import com.game.knight.model.HairStyle;
 import com.game.knight.model.PaletteColor;
-import com.game.knight.model.PetType;
 import com.game.knight.model.WeaponType;
 
 public abstract class Combatant {
@@ -131,10 +130,6 @@ public abstract class Combatant {
 
     public HairStyle getHairStyle() {
         return data.getHairStyle();
-    }
-
-    public PetType getPetType() {
-        return data.getPetType();
     }
 
     public boolean isAttacking() {
